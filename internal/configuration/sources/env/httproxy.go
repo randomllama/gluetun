@@ -15,6 +15,12 @@ func (s *Source) readHTTPProxy() (httpProxy settings.HTTPProxy, err error) {
 	_, httpProxy.Password = s.getEnvWithRetro("HTTPPROXY_PASSWORD",
 		[]string{"PROXY_PASSWORD", "TINYPROXY_PASSWORD"}, env.ForceLowercase(false))
 
+	_, httpProxy.CertFile = s.getEnvWithRetro("HTTPPROXY_CERTFILE",
+		[]string{"PROXY_CERTFILE"}, env.ForceLowercase(false))
+
+	_, httpProxy.KeyFile = s.getEnvWithRetro("HTTPPROXY_KEYFILE",
+		[]string{"PROXY_KEYFILE"}, env.ForceLowercase(false))
+
 	httpProxy.ListeningAddress = s.readHTTProxyListeningAddress()
 
 	httpProxy.Enabled, err = s.readHTTProxyEnabled()

@@ -9,6 +9,8 @@ import (
 
 type Server struct {
 	address           string
+	certFile          string
+	keyFile           string
 	handler           http.Handler
 	logger            infoErrorer
 	internalWG        *sync.WaitGroup
@@ -17,11 +19,13 @@ type Server struct {
 }
 
 func New(ctx context.Context, address string, logger Logger,
-	stealth, verbose bool, username, password string,
+	stealth, verbose bool, username, password, certFile, keyFile string,
 	readHeaderTimeout, readTimeout time.Duration) *Server {
 	wg := &sync.WaitGroup{}
 	return &Server{
 		address:           address,
+		certFile:          certFile,
+		keyFile:           keyFile,
 		handler:           newHandler(ctx, wg, logger, stealth, verbose, username, password),
 		logger:            logger,
 		internalWG:        wg,
@@ -46,8 +50,13 @@ func (s *Server) Run(ctx context.Context, errorCh chan<- error) {
 			s.logger.Error("failed shutting down: " + err.Error())
 		}
 	}()
+	var err error
 	s.logger.Info("listening on " + s.address)
-	err := server.ListenAndServe()
+	if s.certFile != "" && s.keyFile != "" {
+		err = server.ListenAndServeTLS(s.certFile, s.keyFile)
+	} else {
+		err = server.ListenAndServe()
+	}
 	s.internalWG.Wait()
 	if err != nil && ctx.Err() == nil {
 		errorCh <- err
